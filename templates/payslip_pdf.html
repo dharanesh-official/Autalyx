@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Payslip</title>
+    <style>
+        @page {
+            size: 6in 4in;
+            /* Width 6in, Height 4in */
+            margin: 0;
+        }
+
+        body {
+            font-family: 'Helvetica', 'Arial', sans-serif;
+            font-size: 9pt;
+            /* Slightly smaller font to fit 4x6 */
+            color: #333;
+            width: 6in;
+            height: 4in;
+            margin: 0 auto;
+            padding: 0.2in;
+            box-sizing: border-box;
+            background: #fff;
+            overflow: hidden;
+            /* Check content fits */
+            border: 1px dotted #ccc;
+            /* Visual aid for screen */
+        }
+
+        @media print {
+            body {
+                border: none;
+                margin: 0;
+            }
+        }
+
+        .header {
+            text-align: center;
+            border-bottom: 2px solid #003366;
+            padding-bottom: 5px;
+            margin-bottom: 10px;
+        }
+
+        .header h1 {
+            margin: 0;
+            color: #003366;
+            font-size: 16pt;
+            text-transform: uppercase;
+        }
+
+        .header p {
+            margin: 2px 0;
+            font-size: 8pt;
+            color: #555;
+        }
+
+        .section {
+            margin-bottom: 10px;
+        }
+
+        .row {
+            display: flex;
+            /* Weasyprint keeps basic support, but table is safer for layout */
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 9pt;
+        }
+
+        td {
+            padding: 3px 5px;
+        }
+
+        .label {
+            font-weight: bold;
+            color: #003366;
+            width: 35%;
+        }
+
+        .value {
+            width: 65%;
+            border-bottom: 1px dashed #ccc;
+        }
+
+        .salary-table {
+            width: 100%;
+            margin-top: 10px;
+            border: 1px solid #ccc;
+        }
+
+        .salary-table th {
+            background-color: #f0f0f0;
+            text-align: left;
+            padding: 4px;
+            border-bottom: 1px solid #ccc;
+            font-size: 8pt;
+        }
+
+        .salary-table td {
+            padding: 4px;
+            border-bottom: 1px solid #eee;
+        }
+
+        .total-row td {
+            border-top: 2px solid #003366;
+            font-weight: bold;
+            background-color: #e6f3ff;
+        }
+
+        .footer {
+            margin-top: 15px;
+            text-align: center;
+            font-size: 7pt;
+            color: #777;
+            border-top: 1px solid #ccc;
+            padding-top: 5px;
+        }
+
+        .net-pay {
+            text-align: right;
+            font-size: 12pt;
+            color: #003366;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="header">
+        <h1>{{ company.name }}</h1>
+        <p>{{ company.address }}</p>
+        {% if company.gstn %}
+        <p>GSTN: {{ company.gstn }}</p>
+        {% endif %}
+        <p>Payslip for the month of <strong>{{ payslip.month_year }}</strong></p>
+    </div>
+
+    <table style="width: 100%; margin-bottom: 10px;">
+        <tr>
+            <td width="50%" valign="top">
+                <table>
+                    <tr>
+                        <td class="label">Name:</td>
+                        <td class="value">{{ payslip.employee_name }}</td>
+                    </tr>
+                    <tr>
+                        <td class="label">Emp ID:</td>
+                        <td class="value">{{ payslip.employee_id }}</td>
+                    </tr>
+                    <tr>
+                        <td class="label">Designation:</td>
+                        <td class="value">{{ role|capitalize }}</td>
+                    </tr>
+                </table>
+            </td>
+            <td width="50%" valign="top">
+                <table>
+                    <tr>
+                        <td class="label">Pay Date:</td>
+                        <td class="value">{{ date_today }}</td>
+                    </tr>
+                    <tr>
+                        <td class="label">Paid Days:</td>
+                        <td class="value">{{ payslip.total_payable_days }}</td>
+                    </tr>
+                    <tr>
+                        <td class="label">LOP Days:</td>
+                        <td class="value">{{ payslip.deductible_leave_days }}</td>
+                    </tr>
+                </table>
+            </td>
+        </tr>
+    </table>
+
+    <table class="salary-table">
+        <thead>
+            <tr>
+                <th>Earnings</th>
+                <th style="text-align: right;">Amount (₹)</th>
+                <th>Deductions</th>
+                <th style="text-align: right;">Amount (₹)</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td>Basic Salary</td>
+                <td style="text-align: right;">{{ "%.0f"|format(payslip.gross_salary) }}</td>
+                <td>Leave Deduction</td>
+                <td style="text-align: right; color: red;">{{ "%.0f"|format(payslip.deductions) }}</td>
+            </tr>
+            <!-- Placeholder for other components if needed in future -->
+            <tr>
+                <td>&nbsp;</td>
+                <td>&nbsp;</td>
+                <td>&nbsp;</td>
+                <td>&nbsp;</td>
+            </tr>
+            <tr class="total-row">
+                <td>Gross Earnings</td>
+                <td style="text-align: right;">{{ "%.0f"|format(payslip.gross_salary) }}</td>
+                <td>Total Deductions</td>
+                <td style="text-align: right;">{{ "%.0f"|format(payslip.deductions) }}</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <div style="margin-top: 10px; display: flex; justify-content: space-between; align-items: center;">
+        <div style="font-size: 8pt;">
+            <strong>Net Pay in Words:</strong><br>
+            {{ net_pay_words }} Only
+        </div>
+        <div class="net-pay">
+            <strong>Net Payable: ₹{{ "%.0f"|format(payslip.net_salary) }}</strong>
+        </div>
+    </div>
+
+    <div class="footer">
+        <p>This is a computer-generated document and does not require a signature.</p>
+    </div>
+</body>
+
+</html>

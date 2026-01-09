@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+{% block title %}Manage Employee Categories{% endblock %}
+{% block content %}
+<h2>Manage Employee Categories</h2>
+<div class="card">
+    <h3>Add New Category</h3>
+    <form method="POST" style="display: grid; gap: 1rem; max-width: 500px;">
+        <div class="form-group">
+            <label>Category Name (e.g., 'Permanent', 'Intern')</label>
+            <input type="text" name="name" required placeholder="Enter category name...">
+        </div>
+        <div class="form-group">
+            <label>ID Prefix (e.g., 'EMP', 'INT')</label>
+            <input type="text" name="prefix" required placeholder="Enter prefix...">
+        </div>
+        <button type="submit">Add Category</button>
+    </form>
+</div>
+
+<div class="card">
+    <h3>Existing Categories</h3>
+    <table>
+        <thead>
+            <tr>
+                <th>Category Name</th>
+                <th>Prefix</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for cat in categories %}
+            <tr>
+                <td>{{ cat.name }}</td>
+                <td>{{ cat.prefix }}</td>
+                <td>
+                    <form method="POST" action="{{ url_for('manage_categories') }}">
+                        <input type="hidden" name="delete_id" value="{{ cat.id }}">
+                        <button type="submit" class="small decline"
+                            onclick="return confirm('Delete this category?')">Remove</button>
+                    </form>
+                </td>
+            </tr>
+            {% else %}
+            <tr>
+                <td colspan="3">No categories defined yet.</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

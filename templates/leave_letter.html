@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <style>
+        body {
+            font-family: 'Times New Roman', Times, serif;
+            padding: 40px;
+            color: #333;
+            line-height: 1.6;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .header h1 {
+            margin: 0;
+            font-size: 24px;
+            text-transform: uppercase;
+        }
+
+        .header p {
+            margin: 5px 0;
+            font-size: 14px;
+            color: #666;
+        }
+
+        .content {
+            margin-top: 30px;
+        }
+
+        .subject {
+            font-weight: bold;
+            margin: 20px 0;
+        }
+
+        .field {
+            margin: 10px 0;
+        }
+
+        .label {
+            font-weight: bold;
+            display: inline-block;
+            width: 150px;
+        }
+
+        .footer {
+            margin-top: 60px;
+        }
+
+        .signature {
+            margin-top: 50px;
+            border-top: 1px solid #333;
+            width: 200px;
+            padding-top: 10px;
+            text-align: center;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="header">
+        <h1>Leave Application Letter</h1>
+        <p>Formal Request for Leave of Absence</p>
+    </div>
+
+    <div class="content">
+        <p><strong>Date:</strong> {{ date_today }}</p>
+
+        <p><strong>To,</strong><br>
+            The Supervisor,<br>
+            {{ company.name }}<br>
+            {{ company.address }}</p>
+
+        <p class="subject">Subject: Leave Application Request</p>
+
+        <p>Dear Sir/Madam,</p>
+
+        <p>I am writing to formally request a leave of absence provided with the following details:</p>
+
+        <div class="field"><span class="label">Employee Name:</span> {{ employee.name }}</div>
+        <div class="field"><span class="label">Employee ID:</span> {{ employee.employee_id }}</div>
+        <div class="field"><span class="label">Leave Start Date:</span> {{ start_date }}</div>
+        <div class="field"><span class="label">Leave End Date:</span> {{ end_date }}</div>
+        <div class="field"><span class="label">Reason:</span> {{ reason }}</div>
+
+        {% if team %}
+        <div class="field"><span class="label">Team:</span> {{ team }}</div>
+        {% endif %}
+        {% if project %}
+        <div class="field"><span class="label">Project:</span> {{ project }}</div>
+        {% endif %}
+        {% if team_leader_name %}
+        <div class="field"><span class="label">Team Leader:</span> {{ team_leader_name }}</div>
+        {% endif %}
+
+        <p>I have ensured that my current tasks are up to date and have handed over necessary responsibilities to my
+            team. I can be reached at <strong>{{ employee.phone_number }}</strong> or <strong>{{ employee.email
+                }}</strong> in case of any urgent requirements.</p>
+
+        <p>I hope for your favorable consideration.</p>
+
+        <p>Sincerely,</p>
+
+        <div class="footer">
+            <div class="signature">
+                {{ employee.name }}
+            </div>
+            (Employee Signature)
+        </div>
+    </div>
+</body>
+
+</html>

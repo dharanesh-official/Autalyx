@@ -1,0 +1,75 @@
+{% extends "base.html" %}
+
+{% block title %}Apply for Leave{% endblock %}
+
+{% block content %}
+<h2>Leave Application Form</h2>
+
+{% with messages = get_flashed_messages(with_categories=true) %}
+{% if messages %}
+{% for category, message in messages %}
+<div class="alert-{{ category }}">{{ message }}</div>
+{% endfor %}
+{% endif %}
+{% endwith %}
+
+<form method="post">
+  <div>
+    <label for="team">Your Team</label>
+    <input type="text" id="team" name="team" placeholder="e.g., Frontend Development" required>
+  </div>
+  <div>
+    <label for="project">Current Project</label>
+    <input type="text" id="project" name="project" placeholder="e.g., Customer Portal" required>
+  </div>
+  <div>
+    <label for="team_leader_name">Team Leader's Name</label>
+    <input type="text" id="team_leader_name" name="team_leader_name" required>
+  </div>
+  <div>
+    <label for="team_leader_mobile">Team Leader's Mobile Number</label>
+    <input type="text" id="team_leader_mobile" name="team_leader_mobile" required>
+  </div>
+
+  <hr>
+
+  <div>
+    <label for="start_date">Leave Start Date</label>
+    <input type="date" id="start_date" name="start_date" required>
+  </div>
+  <div>
+    <label for="end_date">Leave End Date</label>
+    <input type="date" id="end_date" name="end_date" required>
+  </div>
+  <div>
+    <label for="reason">Reason for Leave</label>
+    <textarea id="reason" name="reason" rows="4" required></textarea>
+  </div>
+  <button type="submit">Submit Request</button>
+</form>
+
+<script>
+  const startDateInput = document.getElementById('start_date');
+  const endDateInput = document.getElementById('end_date');
+
+  function validateDates() {
+    const start = startDateInput.value;
+    const end = endDateInput.value;
+
+    if (start && end) {
+      if (end < start) {
+        alert("End Date cannot be before Start Date!");
+        endDateInput.value = ""; // Reset invalid input
+      }
+    }
+  }
+
+  // Set min date to today for new requests (optional but good UI)
+  const today = new Date().toISOString().split('T')[0];
+  startDateInput.setAttribute('min', today);
+  endDateInput.setAttribute('min', today);
+
+  startDateInput.addEventListener('change', validateDates);
+  endDateInput.addEventListener('change', validateDates);
+</script>
+{% endblock %}

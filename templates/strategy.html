@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% block title %}Winning Strategy{% endblock %}
+{% block content %}
+<div class="strategy-container" style="padding: 2rem;">
+    <h2>HR Strategy Dashboard</h2>
+    <div class="card-grid"
+        style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1.5rem;">
+        <div class="card" style="border-left: 5px solid #2a9d8f;">
+            <h3>Employee Retention</h3>
+            <p>Current Rate: <strong>95%</strong></p>
+            <p>Goal: Maintain >90% through improved benefits and engagement.</p>
+        </div>
+        <div class="card" style="border-left: 5px solid #e76f51;">
+            <h3>Recruitment Velocity</h3>
+            <p>Avg Time to Hire: <strong>15 Days</strong></p>
+            <p>Strategy: Leverage AI screening to reduce pipeline bottlenecks.</p>
+        </div>
+        <div class="card" style="border-left: 5px solid #e9c46a;">
+            <h3>Skill Development</h3>
+            <p>Training Participation: <strong>80%</strong></p>
+            <p>Focus: Upskilling in Data Analysis and Leadership.</p>
+        </div>
+    </div>
+    <div class="card" style="margin-top: 2rem;">
+        <h3>2026 Core Objectives</h3>
+        <ul>
+            <li>Implement 360-degree feedback loops.</li>
+            <li>Launch "Health & Wellness" verify initiatives.</li>
+            <li>Expand remote work flexibility options.</li>
+        </ul>
+    </div>
+</div>
+{% endblock %}

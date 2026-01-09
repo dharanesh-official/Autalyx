@@ -1,0 +1,118 @@
+{% extends "base.html" %}
+
+{% block title %}Attendance Management{% endblock %}
+
+{% block content %}
+<div class="top-header"
+    style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; flex-wrap: wrap; gap: 1rem;">
+    <div>
+        <h2>Attendance Management</h2>
+        <p style="margin: 0; color: var(--color-gray);">Mark and track daily attendance ({{ today.strftime('%d-%b-%Y')
+            }})</p>
+    </div>
+    <div class="header-actions" style="display: flex; gap: 10px; align-items: center; margin: 0;">
+        <!-- Search Form -->
+        <form action="{{ url_for('attendance') }}" method="GET"
+            style="display: flex; gap: 0.5rem; margin: 0; flex-wrap: nowrap;">
+            <input type="text" name="q" placeholder="Name or ID..." value="{{ search_query }}" class="input-premium"
+                style="width: 200px; height: 42px;">
+            <button type="submit" class="btn-premium btn-dark" style="height: 42px;">Search</button>
+            {% if search_query %}
+            <a href="{{ url_for('attendance') }}" class="btn-premium"
+                style="background: #95a5a6; color: white; height: 42px; text-decoration: none; padding: 0 1rem; line-height: 42px;">Clear</a>
+            {% endif %}
+        </form>
+        <a href="{{ url_for('dashboard') }}" class="btn-premium"
+            style="height: 42px; text-decoration: none; background: transparent; border: 1px solid #ccc; color: #555;">&larr;
+            Back</a>
+    </div>
+</div>
+
+<!-- Attendance Stats Cards (Using Grid) -->
+<div class="summary-grid">
+    <div class="stat-card-premium" style="--card-color: #2a9d8f;">
+        <div class="stat-header">
+            <span class="stat-title">Total Present</span>
+            <span class="stat-icon">&#9989;</span>
+        </div>
+        <div class="stat-value" style="color: #2a9d8f;">{{ stats.present }}</div>
+    </div>
+
+    <div class="stat-card-premium" style="--card-color: #e76f51;">
+        <div class="stat-header">
+            <span class="stat-title">On Leave</span>
+            <span class="stat-icon">&#10060;</span>
+        </div>
+        <div class="stat-value" style="color: #e76f51;">{{ stats.leave }}</div>
+    </div>
+
+    {% if is_hr %}
+    {% for role, count in stats.cat_leave_counts.items() %}
+    <div class="stat-card-premium" style="--card-color: #f4a261;">
+        <div class="stat-header">
+            <span class="stat-title">{{ role }}s Leave</span>
+            <span class="stat-icon">&#9888;</span>
+        </div>
+        <div class="stat-value">{{ count }}</div>
+    </div>
+    {% endfor %}
+    {% endif %}
+</div>
+
+<!-- Attendance Table -->
+<div class="card">
+    <h3>Attendance Register ({{ today.strftime('%d-%b-%Y') }})</h3>
+    <table>
+        <thead>
+            <tr>
+                <th>Employee ID</th>
+                <th>Name</th>
+                <th>Role</th>
+                <th>Current Status</th>
+                <th>Action</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for employee in employees %}
+            <tr>
+                <td>{{ employee.employee_id }}</td>
+                <td>{{ employee.name }}</td>
+                <td>{{ employee.role | capitalize }}</td>
+                <td>
+                    <div style="display: flex; gap: 0.5rem; align-items: center;">
+                        <span
+                            style="font-weight: bold; color: {% if employee.attendance_today == 'Present' %}green{% else %}red{% endif %}; min-width: 60px;">
+                            {{ employee.attendance_today }}
+                        </span>
+                    </div>
+                </td>
+                <td>
+                    <!-- Attendance Toggle UI -->
+                    <form action="{{ url_for('mark_attendance') }}" method="POST" style="display:inline; margin:0;">
+                        <input type="hidden" name="user_id" value="{{ employee.id }}">
+                        <input type="hidden" name="redirect_to" value="attendance">
+                        <input type="hidden" name="current_search_query" value="{{ search_query }}">
+
+                        <div class="toggle-container">
+                            <!-- Present Button -->
+                            <button type="submit" name="status" value="Present"
+                                class="toggle-btn {% if employee.attendance_today == 'Present' %}active{% else %}inactive{% endif %}"
+                                {% if employee.attendance_today=='Present' %}disabled{% endif %}>
+                                Present
+                            </button>
+
+                            <!-- Leave Button -->
+                            <button type="submit" name="status" value="Leave"
+                                class="toggle-btn {% if employee.attendance_today == 'Leave' %}active{% else %}inactive{% endif %}"
+                                {% if employee.attendance_today=='Leave' %}disabled{% endif %}>
+                                Leave
+                            </button>
+                        </div>
+                    </form>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

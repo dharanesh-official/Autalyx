@@ -1,0 +1,75 @@
+{% extends "base.html" %}
+{% block title %}Manage Employee Roles{% endblock %}
+{% block content %}
+<h2>Manage Employee Roles</h2>
+
+<div class="card">
+    <h3>Existing Roles</h3>
+    <table>
+        <thead>
+            <tr>
+                <th>Role Name</th>
+                <th>Prefix</th>
+                <th>Permission Level</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for r in roles %}
+            <tr>
+                <td>{{ r.name }}</td>
+                <td>{{ r.prefix }}</td>
+                <td>
+                    {% if r.base_role == 'hr' %}
+                    <span
+                        style="background:#219ebc; color:white; padding:2px 6px; border-radius:4px; font-size:0.8em;">HR
+                        Admin</span>
+                    {% elif r.base_role == 'supervisor' %}
+                    <span
+                        style="background:#ffb703; color:black; padding:2px 6px; border-radius:4px; font-size:0.8em;">Supervisor</span>
+                    {% else %}
+                    <span
+                        style="background:#8ecae6; color:black; padding:2px 6px; border-radius:4px; font-size:0.8em;">Employee</span>
+                    {% endif %}
+                </td>
+                <td>
+                    <form method="POST" action="{{ url_for('roles') }}">
+                        <input type="hidden" name="delete_id" value="{{ r.id }}">
+                        <button type="submit" class="small decline"
+                            onclick="return confirm('Delete this role? Users assigned to this role may lose access.')">Remove</button>
+                    </form>
+                </td>
+            </tr>
+            {% else %}
+            <tr>
+                <td colspan="4">No roles defined. Default roles should be generated automatically.</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<div class="card">
+    <h3>Add New Role</h3>
+    <p style="color:var(--color-gray); margin-bottom:1rem;">Define a new role and assign its permission level.</p>
+    <form method="POST" style="display: grid; gap: 1rem; max-width: 500px;">
+        <div class="form-group">
+            <label>Role Name (e.g., 'Intern', 'Driver')</label>
+            <input type="text" name="name" required placeholder="Enter role name...">
+        </div>
+        <div class="form-group">
+            <label>ID Prefix (e.g., 'INT', 'DRV')</label>
+            <input type="text" name="prefix" required placeholder="Enter prefix...">
+        </div>
+        <div class="form-group">
+            <label>Permission Level (Base Role)</label>
+            <select name="base_role">
+                <option value="employee">Employee (Standard Access)</option>
+                <option value="supervisor">Supervisor (Team Access)</option>
+                <option value="hr">HR (Admin Access)</option>
+            </select>
+        </div>
+        <button type="submit">Add Role</button>
+    </form>
+</div>
+{% endblock %}

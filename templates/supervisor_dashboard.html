@@ -1,0 +1,162 @@
+{% extends "base.html" %}
+
+{% block title %}Supervisor Dashboard{% endblock %}
+
+{% block content %}
+<h2>Welcome, Supervisor {{ current_user.name }}!</h2>
+
+<div class="header-actions">
+    <a href="{{ url_for('attendance') }}"><button class="btn-premium btn-dark">Attendance System</button></a>
+    <a href="{{ url_for('register') }}"><button>+ Add New Employee</button></a>
+    {% if current_user.role == 'supervisor' %}
+    <a href="{{ url_for('payroll_report') }}"><button>Salary Details</button></a>
+    {% endif %}
+    <button id="toggleHistoryBtn" onclick="toggleHistory()" style="background-color: #6c757d;">Show History</button>
+</div>
+
+<div class="card">
+    <h3>All Pending Leave Requests</h3>
+    {% if pending_requests %}
+    <table>
+        <thead>
+            <tr>
+                <th>Employee Name</th>
+                <th>Leave Dates</th>
+                <th>Team / Project</th>
+                <th>Team Leader Info</th>
+                <th>Reason</th>
+                <th>Letter</th>
+                <th>Action</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for request in pending_requests %}
+            <tr>
+                <td>{{ request.employee.name }}</td>
+                <td>{{ request.start_date.strftime('%d-%b') }} to {{ request.end_date.strftime('%d-%b') }}</td>
+                <td>{{ request.team }} / {{ request.project }}</td>
+                <td>{{ request.team_leader_name }} ({{ request.team_leader_mobile }})</td>
+                <td>{{ request.reason }}</td>
+                <td>
+                    {% if request.letter_path %}
+                    <a href="{{ url_for('static', filename='leave_letters/' + request.letter_path) }}"
+                        target="_blank">View Letter</a>
+                    {% else %}
+                    -
+                    {% endif %}
+                </td>
+                <td class="actions">
+                    <a href="{{ url_for('respond_leave', request_id=request.id, action='approve') }}"
+                        onclick="return confirm('Are you sure you want to APPROVE this leave request of {{ request.employee.name }}?');">
+                        <button class="small approve">Approve</button>
+                    </a>
+                    <a href="{{ url_for('respond_leave', request_id=request.id, action='decline') }}"
+                        onclick="return confirm('Are you sure you want to DECLINE this leave request of {{ request.employee.name }}?');">
+                        <button class="small decline">Decline</button>
+                    </a>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <p>There are no pending leave requests in the company.</p>
+    {% endif %}
+</div>
+
+<div class="card" id="historySection" style="display: none;">
+    <h3>Processed Leave Requests (History)</h3>
+    {% if processed_requests %}
+    <table>
+        <thead>
+            <tr>
+                <th>Employee</th>
+                <th>Dates</th>
+                <th>Reason</th>
+                <th>Status</th>
+                <th>Letter</th>
+                <th>Action</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for request in processed_requests %}
+            <tr>
+                <td>{{ request.employee.name }}</td>
+                <td>{{ request.start_date.strftime('%d-%b') }} to {{ request.end_date.strftime('%d-%b') }}</td>
+                <td>{{ request.reason }}</td>
+                <td><strong style="color: {% if request.status == 'Approved' %}green{% else %}red{% endif %};">{{
+                        request.status }}</strong></td>
+                <td>
+                    {% if request.letter_path %}
+                    <a href="{{ url_for('static', filename='leave_letters/' + request.letter_path) }}"
+                        target="_blank">View</a>
+                    {% else %}
+                    -
+                    {% endif %}
+                </td>
+                <td class="actions">
+                    {% if request.status == 'Declined' %}
+                    <a href="{{ url_for('delete_leave_request', request_id=request.id) }}"
+                        onclick="return confirm('Permanently delete this record and file?');"><button
+                            class="small decline">Delete</button></a>
+                    {% else %}
+                    <span style="color: #888; font-size: 0.9em;">(Cannot Delete)</span>
+                    {% endif %}
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <p>No processed leave requests found.</p>
+    {% endif %}
+</div>
+
+<div class="card">
+    <h3>Your Team Members</h3>
+    {% if team_members %}
+    <table>
+        <thead>
+            <tr>
+                <th>Employee ID</th>
+                <th>Name</th>
+                <th>Email</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for employee in team_members %}
+            <tr>
+                <td>{{ employee.employee_id }}</td>
+                <td>{{ employee.name }}</td>
+                <td>{{ employee.email }}</td>
+                <td class="actions">
+                    <a href="{{ url_for('edit_user', user_id=employee.id) }}"><button class="small">Edit</button></a>
+                    <form method="POST" action="{{ url_for('remove_user', user_id=employee.id) }}"
+                        onsubmit="return confirm('Are you sure you want to remove this employee?');">
+                        <button type="submit" class="small decline">Remove</button>
+                    </form>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <p>You have no employees assigned to you yet. Use the '+ Add New Employee' button to build your team.</p>
+    {% endif %}
+</div>
+
+<script>
+    function toggleHistory() {
+        var x = document.getElementById("historySection");
+        var btn = document.getElementById("toggleHistoryBtn");
+        if (x.style.display === "none") {
+            x.style.display = "block";
+            btn.innerHTML = "Hide History";
+        } else {
+            x.style.display = "none";
+            btn.innerHTML = "Show History";
+        }
+    }
+</script>
+{% endblock %}

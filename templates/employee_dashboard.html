@@ -1,0 +1,61 @@
+{% extends "base.html" %}
+
+{% block title %}Employee Dashboard{% endblock %}
+
+{% block content %}
+<h2>Welcome, {{ current_user.name }}!</h2>
+
+<div class="stat-card-container">
+  <div class="stat-card">
+    <h4>Pending Requests</h4>
+    <p class="stat-number">{{ leave_requests | selectattr('status', 'equalto', 'Pending') | list | length }}</p>
+  </div>
+  <div class="stat-card">
+    <h4>Approved Requests</h4>
+    <p class="stat-number">{{ leave_requests | selectattr('status', 'equalto', 'Approved') | list | length }}</p>
+  </div>
+</div>
+
+<a href="{{ url_for('apply_leave') }}"><button>Apply for Leave</button></a>
+<a href="{{ url_for('view_payslip') }}"><button>View Current Month's Payslip</button></a>
+
+<hr>
+
+<h3>Your Leave History</h3>
+{% if leave_requests %}
+<table>
+  <thead>
+    <tr>
+      <th>Start Date</th>
+      <th>End Date</th>
+      <th>Reason</th>
+      <th>Status</th>
+      <th>Action</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for request in leave_requests %}
+    <tr class="status-{{ request.status | lower }}">
+      <td>{{ request.start_date.strftime('%d-%b-%Y') }}</td>
+      <td>{{ request.end_date.strftime('%d-%b-%Y') }}</td>
+      <td>{{ request.reason }}</td>
+      <td>{{ request.status }}</td>
+      <td>
+        {% if request.status == 'Pending' %}
+        <a href="{{ url_for('delete_leave_request', request_id=request.id) }}"
+          onclick="return confirm('Are you sure you want to cancel this request?');"
+          style="color: red; text-decoration: none; font-weight: bold;">
+          Cancel
+        </a>
+        {% else %}
+        -
+        {% endif %}
+      </td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% else %}
+<p>You have no leave requests.</p>
+{% endif %}
+{% endblock %}

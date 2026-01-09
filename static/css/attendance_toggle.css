@@ -1,0 +1,174 @@
+/* Toggle Switch */
+.toggle-switch-container {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0;
+}
+
+.toggle-switch {
+    display: inline-flex;
+    border-radius: 20px;
+    background-color: #ffffff;
+    border: 1px solid #ddd;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    position: relative;
+    overflow: hidden;
+    cursor: pointer;
+    width: 200px;
+    /* Adjust size based on design */
+    height: 40px;
+}
+
+/* Hide default radio buttons visually */
+.toggle-switch input[type="radio"] {
+    position: absolute;
+    opacity: 0;
+    pointer-events: none;
+}
+
+/* The sliding labels */
+.toggle-label {
+    flex: 1;
+    text-align: center;
+    line-height: 40px;
+    font-weight: 600;
+    z-index: 2;
+    transition: color 0.3s;
+    color: #888;
+}
+
+/* The sliding background (the 'thumb') */
+.toggle-slider {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 50%;
+    height: 100%;
+    background-color: transparent;
+    transition: transform 0.3s cubic-bezier(0.4, 0.0, 0.2, 1);
+    z-index: 1;
+    border-radius: 20px;
+}
+
+/* States */
+/* When 'Present' is checked (left side) */
+.toggle-switch.present-active .toggle-slider {
+    background-color: #2a9d8f;
+    transform: translateX(0%);
+}
+
+.toggle-switch.present-active .toggle-label-present {
+    color: white;
+}
+
+.toggle-switch.present-active .toggle-label-leave {
+    color: #888;
+}
+
+.toggle-switch.present-active {
+    border-color: #2a9d8f;
+}
+
+/* When 'Leave' is checked (right side) */
+.toggle-switch.leave-active .toggle-slider {
+    background-color: #D90429;
+    transform: translateX(100%);
+}
+
+.toggle-switch.leave-active .toggle-label-leave {
+    color: white;
+}
+
+.toggle-switch.leave-active .toggle-label-present {
+    color: #888;
+}
+
+.toggle-switch.leave-active {
+    border-color: #D90429;
+}
+
+/* --- Specific Override for the Attendance Table in Screenshot Style --- */
+/* The user wants a Red toggle that fills either side */
+
+.att-btn {
+    display: inline-block;
+    padding: 6px 16px;
+    border-radius: 20px;
+    font-weight: 600;
+    font-size: 0.9rem;
+    cursor: pointer;
+    border: 1px solid transparent;
+    transition: all 0.2s;
+    text-align: center;
+    min-width: 80px;
+}
+
+.att-wrapper {
+    display: inline-flex;
+    background: #fff;
+    border-radius: 25px;
+    box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.1);
+    padding: 2px;
+    border: 1px solid #eee;
+}
+
+.att-option {
+    padding: 8px 20px;
+    border-radius: 20px;
+    cursor: pointer;
+    font-weight: 600;
+    color: #888;
+    transition: all 0.3s;
+}
+
+.att-option.active-present {
+    background-color: white;
+    /* Per screenshot, one side is white with text, other is filled red? No, actually opposite usually. */
+    /* Screenshot: Left (Present) is specific color, Right (Leave) is specific color. */
+    /* Let's try to mimic the screenshot specifically:
+       Layout: [ Present | Leave ]
+       If Present: Left part is Red/Green, Right is White.
+       If Leave: Left part is White, Right is Red.
+    */
+}
+
+/* Let's use a simpler Form Button approach that looks exactly like the requested toggle */
+.toggle-container {
+    display: inline-flex;
+    border-radius: 8px;
+    /* Slightly rounded per screenshot */
+    overflow: hidden;
+    box-shadow: 2px 2px 0px #e63946;
+    /* Shadow effect from screenshot */
+    border: 1px solid #e63946;
+}
+
+.toggle-btn {
+    padding: 8px 24px;
+    border: none;
+    font-weight: 600;
+    cursor: pointer;
+    font-size: 1rem;
+    transition: all 0.2s;
+}
+
+.toggle-btn.active {
+    background-color: #ff3b3b;
+    /* Bright red from screenshot */
+    color: white;
+}
+
+.toggle-btn.inactive {
+    background-color: white;
+    color: #ff3b3b;
+}
+
+/* Specific styling for Present/Leave text colors if needed */
+.toggle-btn.inactive[value="Present"] {
+    color: #ff3b3b;
+}
+
+.toggle-btn.inactive[value="Leave"] {
+    color: #ff3b3b;
+}

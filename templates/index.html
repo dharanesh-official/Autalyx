@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+
+{% block title %}Welcome{% endblock %}
+
+{% block content %}
+<div class="login-container">
+    <div class="login-form card" style="text-align: center;">
+        <h2>Welcome to HR Pro</h2>
+        <p style="margin-bottom: 2rem; color: var(--color-gray);">Select your role to continue to login.</p>
+        <div class="role-buttons" style="display: grid; gap: 10px;">
+            <a href="{{ url_for('login_role', portal_role='hr') }}">
+                <button style="width: 100%;">HR Login</button>
+            </a>
+            <a href="{{ url_for('login_role', portal_role='supervisor') }}">
+                <button style="width: 100%;">Supervisor Login</button>
+            </a>
+            <a href="{{ url_for('login_role', portal_role='employee') }}">
+                <button style="width: 100%;">Employee Login</button>
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,424 @@
+{% extends "base.html" %}
+
+{% block title %}Payroll Report{% endblock %}
+
+{% block content %}
+<!-- Wrap everything in the form so all filters work together -->
+<form method="GET" action="{{ url_for('payroll_report') }}">
+  <div class="top-header"
+    style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; flex-wrap: wrap; gap: 1rem;">
+    <div>
+      <h2>Company Payroll Report</h2>
+      <p style="margin: 0; color: var(--color-gray); font-size: 0.9rem;">Period: {{ month_year }}</p>
+    </div>
+
+    <!-- Download Button -->
+    <div>
+      <button type="button" onclick="openDownloadModal()" class="btn-premium btn-dark"
+        style="height: 45px; display: inline-flex; align-items: center; gap: 8px;">
+        <span>&#128196;</span> Download Pay Slips
+      </button>
+    </div>
+  </div>
+
+  <!-- Filters Toolbar -->
+  <div class="filter-toolbar"
+    style="display: flex; gap: 12px; align-items: center; justify-content: flex-start; padding: 1.25rem; background: white; border-radius: 12px; box-shadow: var(--shadow); flex-wrap: wrap;">
+
+    <!-- Search (Flex Grow) -->
+    <div style="flex-grow: 1; min-width: 250px;">
+      <div style="display: flex; gap: 0;">
+        <input type="text" name="search" class="input-premium" placeholder="Search Name or ID..."
+          value="{{ request.args.get('search', '') }}"
+          style="width: 100%; height: 45px; border-top-right-radius: 0; border-bottom-right-radius: 0; border-right: none;">
+        <button type="submit" class="btn-premium btn-primary" title="Search"
+          style="height: 45px; border-top-left-radius: 0; border-bottom-left-radius: 0; padding: 0 1.2rem;">
+          &#128269;
+        </button>
+      </div>
+    </div>
+
+    <!-- Role Select -->
+    <div style="width: 180px;">
+      <select name="role" class="input-premium" style="width: 100%; height: 45px;">
+        <option value="">All Roles</option>
+        <option value="employee" {% if request.args.get('role')=='employee' %}selected{% endif %}>Employee</option>
+        <option value="supervisor" {% if request.args.get('role')=='supervisor' %}selected{% endif %}>Supervisor
+        </option>
+        {% if current_user.role != 'supervisor' %}
+        <option value="hr" {% if request.args.get('role')=='hr' %}selected{% endif %}>HR</option>
+        {% endif %}
+      </select>
+    </div>
+
+    <!-- View Type Select -->
+    <div style="width: 160px;">
+      <select name="view_type" id="view_type_select" class="input-premium" onchange="toggleDateInputs()"
+        style="width: 100%; height: 45px;">
+        <option value="month" {% if view_type=='month' %}selected{% endif %}>Month Wise</option>
+        <option value="week" {% if view_type=='week' %}selected{% endif %}>Week Wise</option>
+        <option value="day" {% if view_type=='day' %}selected{% endif %}>Day Wise</option>
+      </select>
+    </div>
+
+    <!-- Date Inputs Container -->
+    <div id="date_inputs_container" style="width: 200px;">
+      <input type="month" id="input_month" name="selected_month" class="input-premium"
+        style="display: none; width: 100%; height: 45px;" max="{{ current_date }}">
+      <input type="week" id="input_week" name="selected_week" class="input-premium"
+        style="display: none; width: 100%; height: 45px;" max="{{ current_week }}">
+      <input type="date" id="input_day" name="selected_date" class="input-premium"
+        style="display: none; width: 100%; height: 45px;" max="{{ current_date }}">
+    </div>
+
+    <!-- Filter Button -->
+    <!-- We don't strictly need a second submit button if searching works, but usually users want an explicit 'Apply Filters' button -->
+    <button type="submit" class="btn-premium btn-dark" style="height: 45px; padding: 0 2rem;">Apply</button>
+
+  </div>
+</form>
+
+<!-- Employee Counts Section -->
+<div class="summary-grid">
+  <div class="stat-card-premium" style="--card-color: #2a9d8f;">
+    <div class="stat-header">
+      <span class="stat-title">Total Employees</span>
+      <span class="stat-icon">&#128101;</span>
+    </div>
+    <div class="stat-value">{{ total_employees }}</div>
+  </div>
+
+  {% if role_counts.get('Employee') %}
+  <div class="stat-card-premium" style="--card-color: #e9c46a;">
+    <div class="stat-header">
+      <span class="stat-title">Employees</span>
+      <span class="stat-icon">&#128100;</span>
+    </div>
+    <div class="stat-value">{{ role_counts.get('Employee', 0) }}</div>
+  </div>
+  {% endif %}
+
+  {% if role_counts.get('Supervisor') %}
+  <div class="stat-card-premium" style="--card-color: #f4a261;">
+    <div class="stat-header">
+      <span class="stat-title">Supervisors</span>
+      <span class="stat-icon">&#128104;</span>
+    </div>
+    <div class="stat-value">{{ role_counts.get('Supervisor', 0) }}</div>
+  </div>
+  {% endif %}
+
+  {% if role_counts.get('Hr') %}
+  <div class="stat-card-premium" style="--card-color: #e76f51;">
+    <div class="stat-header">
+      <span class="stat-title">HR Admin</span>
+      <span class="stat-icon">&#128187;</span>
+    </div>
+    <div class="stat-value">{{ role_counts.get('Hr', 0) }}</div>
+  </div>
+  {% endif %}
+</div>
+
+{% if current_user.role == 'hr' %}
+<div class="card">
+  <h3>Payroll Analytics ({{ view_type|capitalize }})</h3>
+  <div class="analytics-grid">
+    <div class="analytic-item">
+      <h4 style="margin:0; color:#64748b; font-size: 0.9rem; margin-bottom: 0.5rem;">Total Gross Salary</h4>
+      <h2 style="color:#2a9d8f; margin: 0; font-size: 1.5rem;">₹{{ "%.0f"|format(total_gross) }}</h2>
+    </div>
+    <div class="analytic-item">
+      <h4 style="margin:0; color:#64748b; font-size: 0.9rem; margin-bottom: 0.5rem;">Total Deductions</h4>
+      <h2 style="color:#e76f51; margin: 0; font-size: 1.5rem;">₹{{ "%.0f"|format(total_deductions) }}</h2>
+    </div>
+    <div class="analytic-item" style="border: 2px solid #2a9d8f; background: #f0fdf9;">
+      <h4 style="margin:0; color:#2a9d8f; font-size: 0.9rem; margin-bottom: 0.5rem;">Total Net Payable</h4>
+      <h2 style="color:#264653; margin: 0; font-size: 1.8rem;">₹{{ "%.0f"|format(total_net) }}</h2>
+    </div>
+  </div>
+
+  <div style="height: 300px; width: 100%;">
+    <canvas id="payrollChart"></canvas>
+  </div>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    const ctx = document.getElementById('payrollChart').getContext('2d');
+    const roleLabels = {{ role_salary.keys() | list | tojson
+  }};
+  const roleValues = {{ role_salary.values() | list | tojson }};
+
+  new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: roleLabels,
+      datasets: [{
+        label: 'Net Salary Distribution by Role (₹)',
+        data: roleValues,
+        backgroundColor: ['rgba(42, 157, 143, 0.7)', 'rgba(231, 111, 81, 0.7)', 'rgba(233, 196, 106, 0.7)'],
+        borderColor: ['rgba(42, 157, 143, 1)', 'rgba(231, 111, 81, 1)', 'rgba(233, 196, 106, 1)'],
+        borderWidth: 1
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      scales: { y: { beginAtZero: true } }
+    }
+  });
+
+  toggleDateInputs();
+  });
+</script>
+{% endif %}
+
+<div class="card">
+  <h3>Payroll Summary ({{ view_type|capitalize }} Wise)</h3>
+  {% if payroll_data %}
+  <table>
+    <thead>
+      <tr>
+        <th>Employee ID</th>
+        <th>Name</th>
+        <th>Gross</th>
+        <th>Deductions</th>
+        <th>Net Salary</th>
+        <th>Details</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for report in payroll_data %}
+      <tr>
+        <td>{{ report.employee_id }}</td>
+        <td>{{ report.employee_name }}</td>
+        <td>₹{{ "%.0f"|format(report.gross_salary) }}</td>
+        <td style="color: #e76f51;">₹{{ "%.0f"|format(report.deductions) }}</td>
+        <td style="font-weight: 600; color: #2a9d8f;">₹{{ "%.0f"|format(report.net_salary) }}</td>
+        <td>
+          <button class="btn-premium btn-dark small" style="padding: 0.4rem 0.8rem; font-size: 0.8rem;"
+            data-name="{{ report.employee_name }}" data-id="{{ report.employee_id }}"
+            data-base="{{ '%.0f'|format(report.gross_salary) }}" data-leavedays="{{ report.deductible_leave_days }}"
+            data-leavedates="{{ report.leave_dates|join(', ') }}"
+            data-deductions="{{ '%.0f'|format(report.deductions) }}" data-net="{{ '%.0f'|format(report.net_salary) }}"
+            data-period="{{ report.period_label }}" data-userid="{{ report.user_id }}" onclick="openPayrollModal(this)">
+            View Slip
+          </button>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+  <div style="padding: 2rem; text-align: center; color: #888;">
+    <p>No payroll data found for the selected criteria.</p>
+  </div>
+  {% endif %}
+</div>
+
+<!-- Modal Structure -->
+<div id="payrollModal" class="modal">
+  <div class="modal-content">
+    <span class="close" onclick="closePayrollModal()">&times;</span>
+    <h3 style="border-bottom: 2px solid #f0f0f0; padding-bottom: 10px; margin-bottom: 20px;">Payslip Details</h3>
+    <div id="modalBody">
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 15px;">
+        <div><strong>Name:</strong> <span id="mName"></span></div>
+        <div><strong>ID:</strong> <span id="mId"></span></div>
+      </div>
+      <p><strong>Period:</strong> <span id="mPeriod" style="color: #666;"></span></p>
+
+      <div style="background: #f9f9f9; padding: 15px; border-radius: 8px; margin: 15px 0;">
+        <div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
+          <span>Base Pay:</span>
+          <span>₹<span id="mBase"></span></span>
+        </div>
+        <div style="display: flex; justify-content: space-between; margin-bottom: 5px; color: #e76f51;">
+          <span>Deductions (Leave: <span id="mLeaveDays"></span> days):</span>
+          <span>-₹<span id="mDeductions"></span></span>
+        </div>
+        <div
+          style="border-top: 1px solid #ddd; margin-top: 10px; padding-top: 10px; display: flex; justify-content: space-between; font-weight: bold; font-size: 1.1em; color: #2a9d8f;">
+          <span>Net Pay:</span>
+          <span>₹<span id="mNet"></span></span>
+        </div>
+      </div>
+
+      <div style="font-size: 0.85rem; color: #888; margin-bottom: 20px;">
+        <strong>Leave Dates:</strong> <span id="mLeaveDates"></span>
+      </div>
+
+      <div style="display: flex; gap: 10px;">
+        <a id="viewLink" href="#" target="_blank" style="text-decoration: none; flex: 1;">
+          <button class="btn-premium btn-dark" style="width: 100%;">
+            View Pay Slip
+          </button>
+        </a>
+        <a id="downloadLink" href="#" download style="text-decoration: none; flex: 1;">
+          <button class="btn-premium btn-primary" style="width: 100%;">
+            Download PDF
+          </button>
+        </a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<style>
+  /* Local modal styles kept for specific component logic if global modal css is missing or simple */
+  .modal {
+    display: none;
+    position: fixed;
+    z-index: 1000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    overflow: auto;
+    background-color: rgba(0, 0, 0, 0.5);
+    backdrop-filter: blur(2px);
+  }
+
+  .modal-content {
+    background-color: #fefefe;
+    margin: 10% auto;
+    padding: 30px;
+    border: none;
+    width: 90%;
+    max-width: 450px;
+    border-radius: 16px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+    animation: slideDown 0.3s ease-out;
+  }
+
+  .close {
+    color: #aaa;
+    float: right;
+    font-size: 28px;
+    font-weight: bold;
+    cursor: pointer;
+    line-height: 1;
+  }
+
+  .close:hover {
+    color: var(--color-red-primary);
+  }
+
+  @keyframes slideDown {
+    from {
+      opacity: 0;
+      transform: translateY(-20px);
+    }
+
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+</style>
+
+<!-- Download Modal -->
+<div id="downloadModal" class="modal">
+  <div class="modal-content">
+    <span class="close" onclick="closeDownloadModal()">&times;</span>
+    <h3>Download Pay Slips</h3>
+    <p style="color: #666; margin-bottom: 20px;">Select filters to generate a ZIP of standard PDF payslips.</p>
+
+    <form method="GET" action="{{ url_for('download_all_payslips') }}">
+      <div style="margin-bottom: 15px;">
+        <label style="display: block; margin-bottom: 5px;"><strong>User Role</strong></label>
+        <select name="role" class="input-premium" style="width: 100%;">
+          <option value="">All Roles</option>
+          <option value="employee">Employee</option>
+          <option value="supervisor">Supervisor</option>
+          {% if current_user.role != 'supervisor' %}
+          <option value="hr">HR</option>
+          {% endif %}
+        </select>
+      </div>
+
+      <div style="margin-bottom: 25px;">
+        <label style="display: block; margin-bottom: 5px;"><strong>Time Period</strong></label>
+        <select name="view_type" class="input-premium" style="width: 100%;">
+          <option value="month">Month Wise</option>
+          <option value="week">Week Wise</option>
+          <option value="day">Day Wise</option>
+        </select>
+      </div>
+
+      <button type="submit" class="btn-premium btn-primary" style="width: 100%;">Download ZIP Archive</button>
+    </form>
+  </div>
+</div>
+
+<script>
+  function openDownloadModal() {
+    document.getElementById('downloadModal').style.display = "block";
+  }
+
+  function closeDownloadModal() {
+    document.getElementById('downloadModal').style.display = "none";
+  }
+
+  function closePayrollModal() {
+    document.getElementById('payrollModal').style.display = "none";
+  }
+
+  // Close modals when clicking outside
+  window.onclick = function (event) {
+    if (event.target == document.getElementById('payrollModal')) {
+      closePayrollModal();
+    }
+    if (event.target == document.getElementById('downloadModal')) {
+      closeDownloadModal();
+    }
+  }
+
+  function openPayrollModal(btn) {
+    const name = btn.getAttribute('data-name');
+    const id = btn.getAttribute('data-id');
+    const base = btn.getAttribute('data-base');
+    const leaveDays = btn.getAttribute('data-leavedays');
+    const leaveDates = btn.getAttribute('data-leavedates');
+    const deductions = btn.getAttribute('data-deductions');
+    const net = btn.getAttribute('data-net');
+    const period = btn.getAttribute('data-period');
+    const userId = btn.getAttribute('data-userid');
+
+    document.getElementById('mName').innerText = name;
+    document.getElementById('mId').innerText = id;
+    document.getElementById('mBase').innerText = base;
+    document.getElementById('mLeaveDays').innerText = leaveDays;
+    document.getElementById('mLeaveDates').innerText = leaveDates ? leaveDates : 'None';
+    document.getElementById('mDeductions').innerText = deductions;
+    document.getElementById('mNet').innerText = net;
+    document.getElementById('mPeriod').innerText = period;
+
+    // Set View and Download Links
+    const linkUrl = "/download_payslip/" + userId;
+    document.getElementById('downloadLink').href = linkUrl;
+    document.getElementById('viewLink').href = linkUrl;
+
+    document.getElementById('payrollModal').style.display = "block";
+  }
+
+  function toggleDateInputs() {
+    const viewType = document.getElementById('view_type_select').value;
+    const monthInput = document.getElementById('input_month');
+    const weekInput = document.getElementById('input_week');
+    const dayInput = document.getElementById('input_day');
+
+    monthInput.style.display = 'none';
+    weekInput.style.display = 'none';
+    dayInput.style.display = 'none';
+
+    if (viewType === 'month') {
+      monthInput.style.display = 'inline-block';
+    } else if (viewType === 'week') {
+      weekInput.style.display = 'inline-block';
+    } else if (viewType === 'day') {
+      dayInput.style.display = 'inline-block';
+    }
+  }
+</script>
+{% endblock %}

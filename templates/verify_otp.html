@@ -1,0 +1,114 @@
+{% extends "base.html" %}
+
+{% block title %}Verify OTP{% endblock %}
+
+{% block content %}
+<div class="login-container">
+    <div class="login-form card">
+        <h2>Verify OTP</h2>
+        <p>A 6-digit code has been sent to your email.</p>
+        <form method="post">
+            <div class="form-group">
+                <label for="otp">Enter 6-Digit Code</label>
+                <input type="text" id="otp" name="otp" pattern="\d{6}" maxlength="6" required
+                    style="text-align: center; font-size: 1.5rem; letter-spacing: 0.5rem;">
+            </div>
+            <button type="submit" class="btn-primary">Verify Code</button>
+        </form>
+
+        <div style="margin-top: 1.5rem; text-align: center;">
+            <p id="timer-msg">Resend code in <span id="timer">120</span>s</p>
+            <a href="{{ url_for('resend_otp') }}" id="resend-link" style="display: none;">Resend Code</a>
+        </div>
+    </div>
+</div>
+
+<script>
+    const DURATION = 120;
+    const STORAGE_KEY = 'otp_timer_left';
+    const TIMESTAMP_KEY = 'otp_timestamp';
+
+    let timeLeft = DURATION;
+    const timerElem = document.getElementById('timer');
+    const timerMsg = document.getElementById('timer-msg');
+    const resendLink = document.getElementById('resend-link');
+    const form = document.querySelector('form');
+
+    function initTimer() {
+        const now = Math.floor(Date.now() / 1000);
+
+        // Check if this is a page reload
+        // performance.getEntriesByType("navigation")[0].type === 'reload'
+        const navEntry = performance.getEntriesByType("navigation")[0];
+        const isReload = navEntry && navEntry.type === 'reload';
+
+        if (isReload) {
+            const storedTime = sessionStorage.getItem(STORAGE_KEY);
+            const storedTimestamp = sessionStorage.getItem(TIMESTAMP_KEY);
+
+            if (storedTime && storedTimestamp) {
+                const elapsed = now - parseInt(storedTimestamp);
+                // The storedTime was the time left when we saved.
+                // So current time left = storedTime - elapsed
+                // Wait, simpler: just store the TARGET timestamp.
+            }
+        }
+    }
+
+    // SIMPLIFIED APPROACH: Store the Target End Time
+    // On load:
+    // 1. If 'otp_target' exists in sessionStorage AND it's a reload -> use it.
+    // 2. Else -> set new target (now + 120) and store it.
+
+    const TARGET_KEY = 'otp_target_time';
+    let targetTime;
+    const navEntry = performance.getEntriesByType("navigation")[0];
+    const isReload = navEntry && navEntry.type === 'reload';
+
+    if (isReload && sessionStorage.getItem(TARGET_KEY)) {
+        targetTime = parseInt(sessionStorage.getItem(TARGET_KEY));
+    } else {
+        targetTime = Math.floor(Date.now() / 1000) + DURATION;
+        sessionStorage.setItem(TARGET_KEY, targetTime);
+    }
+
+    function updateTimer() {
+        const now = Math.floor(Date.now() / 1000);
+        timeLeft = targetTime - now;
+
+        if (timeLeft <= 0) {
+            timeLeft = 0;
+            timerElem.textContent = "0";
+            clearInterval(countdown);
+            timerMsg.style.display = 'none';
+            resendLink.style.display = 'inline-block';
+            window.onbeforeunload = null; // Disable warning when timer ends? Optional.
+        } else {
+            timerElem.textContent = timeLeft;
+        }
+    }
+
+    updateTimer(); // Initial call
+    const countdown = setInterval(updateTimer, 1000);
+
+    // Warning on refresh/leave
+    window.onbeforeunload = function (e) {
+        if (timeLeft > 0) {
+            const msg = "If you refresh, the timer might reset. Are you sure?";
+            e.returnValue = msg;
+            return msg;
+        }
+    };
+
+    // Prepare to disable warning on valid actions
+    form.addEventListener('submit', () => {
+        window.onbeforeunload = null;
+    });
+
+    resendLink.addEventListener('click', () => {
+        window.onbeforeunload = null;
+        sessionStorage.removeItem(TARGET_KEY); // Clear so next load is fresh
+    });
+
+</script>
+{% endblock %}

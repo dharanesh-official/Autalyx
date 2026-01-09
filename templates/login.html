@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+
+{% block title %}Login{% endblock %}
+
+{% block content %}
+<div class="login-container">
+  <div class="login-form card">
+    <h2>
+      {% if role %}{{ role|title }} Portal{% else %}Login to Your Account{% endif %}
+    </h2>
+    <form method="post"
+      action="{% if role %}{{ url_for('login_role', portal_role=role) }}{% else %}{{ url_for('login') }}{% endif %}">
+      <div>
+        <label for="employee_id">Employee ID</label>
+        <input type="text" id="employee_id" name="employee_id" required style="text-transform: uppercase;"
+          oninput="this.value = this.value.toUpperCase()">
+      </div>
+      <div>
+        <label for="password">Password</label>
+        <input type="password" id="password" name="password" required>
+      </div>
+      <button type="submit">Login</button>
+      <div style="margin-top: 1rem; text-align: center; display: flex; flex-direction: column; gap: 0.5rem;">
+        <a href="{{ url_for('forgot_password') }}" style="font-size: 0.9em;">Forgot Password?</a>
+        <a href="{{ url_for('index') }}"
+          style="font-size: 0.9em; color: var(--color-gray); text-decoration: none;">&larr; Back to Role Selection</a>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

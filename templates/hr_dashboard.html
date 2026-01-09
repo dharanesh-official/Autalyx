@@ -1,0 +1,173 @@
+{% extends "base.html" %}
+
+{% block title %}HR Dashboard{% endblock %}
+
+{% block content %}
+<div class="top-header"
+  style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; flex-wrap: wrap; gap: 1rem;">
+  <div>
+    <h2>HR Administration Dashboard</h2>
+    <p style="margin: 0; color: var(--color-gray); font-size: 0.9rem;">Overview & Management</p>
+  </div>
+  <div class="header-actions" style="display: flex; gap: 10px; align-items: center; margin: 0;">
+    <div class="user-pill"
+      style="padding: 0.5rem 1rem; background: #e0f2f1; color: #00695c; border-radius: 20px; font-weight: 600; font-size: 0.9rem; margin-right: 10px;">
+      HR Admin: {{ current_user.name.split()[0] }}
+    </div>
+    <a href="{{ url_for('attendance') }}" class="btn-premium btn-dark" style="text-decoration: none;">Attendance</a>
+    <a href="{{ url_for('payroll_report') }}" class="btn-premium btn-dark" style="text-decoration: none;">Payroll</a>
+    <a href="{{ url_for('register') }}" class="btn-premium btn-dark" style="text-decoration: none;">+ Employee</a>
+  </div>
+</div>
+
+<!-- Summary Stats -->
+<div class="summary-grid">
+  <div class="stat-card-premium" style="--card-color: #2a9d8f;">
+    <div class="stat-header">
+      <span class="stat-title">Total Employees</span>
+      <span class="stat-icon">&#128101;</span>
+    </div>
+    <div class="stat-value">{{ total_employees }}</div>
+  </div>
+
+  {% if role_counts.get('Employee') %}
+  <div class="stat-card-premium" style="--card-color: #e9c46a;">
+    <div class="stat-header">
+      <span class="stat-title">Employees</span>
+      <span class="stat-icon">&#128100;</span>
+    </div>
+    <div class="stat-value">{{ role_counts.get('Employee', 0) }}</div>
+  </div>
+  {% endif %}
+
+  {% if role_counts.get('Supervisor') %}
+  <div class="stat-card-premium" style="--card-color: #f4a261;">
+    <div class="stat-header">
+      <span class="stat-title">Supervisors</span>
+      <span class="stat-icon">&#128104;</span>
+    </div>
+    <div class="stat-value">{{ role_counts.get('Supervisor', 0) }}</div>
+  </div>
+  {% endif %}
+
+  {% if role_counts.get('Hr') %}
+  <div class="stat-card-premium" style="--card-color: #e76f51;">
+    <div class="stat-header">
+      <span class="stat-title">HR Admin</span>
+      <span class="stat-icon">&#128187;</span>
+    </div>
+    <div class="stat-value">{{ role_counts.get('Hr', 0) }}</div>
+  </div>
+  {% endif %}
+</div>
+
+<!-- Filters -->
+<!-- Employees Table Section -->
+<div class="card" style="position: relative;">
+  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+    <h3 style="margin: 0;">All Company Employees</h3>
+
+    <!-- Search & Filter Wrapper -->
+    <div style="display: flex; gap: 10px; align-items: center;">
+      <!-- Search Form (Always Visible) -->
+      <form method="GET" action="{{ url_for('dashboard') }}" style="margin: 0;">
+        <div class="filter-input-group" style="position: relative;">
+          <input type="text" name="search" class="input-premium" placeholder="Search..."
+            value="{{ request.args.get('search', '') }}"
+            style="width: 250px; padding-right: 35px; height: 40px; font-size: 0.9rem;">
+          <button type="submit"
+            style="position: absolute; right: 5px; top: 50%; transform: translateY(-50%); background: none; border: none; color: #888; cursor: pointer;">
+            &#128269;
+          </button>
+        </div>
+      </form>
+
+      <!-- Filter Icon Button -->
+      <div style="position: relative;">
+        <button id="filterBtn" class="btn-premium btn-dark"
+          style="width: 40px; height: 40px; padding: 0; display: flex; align-items: center; justify-content: center; border-radius: 8px;"
+          onclick="toggleFilterPopup()">
+          <svg style="width: 20px; height: 20px; fill: white;" viewBox="0 0 24 24">
+            <path d="M10 18h4v-2h-4v2zM3 6v2h18V6H3zm3 7h12v-2H6v2z" />
+          </svg>
+        </button>
+
+        <!-- Filter Popup (Hidden by default) -->
+        <div id="filterPopup"
+          style="display: none; position: absolute; right: 0; top: 50px; background: white; padding: 15px; box-shadow: 0 5px 20px rgba(0,0,0,0.15); border-radius: 12px; z-index: 1000; width: 220px; border: 1px solid #eee;">
+          <form method="GET" action="{{ url_for('dashboard') }}"
+            style="display: flex; flex-direction: column; gap: 10px;">
+            <input type="hidden" name="search" value="{{ request.args.get('search', '') }}">
+            <label style="font-size: 0.85rem; color: #666; font-weight: 600;">Filter by Role:</label>
+            <select name="role" class="input-premium" style="width: 100%; height: 45px; font-size: 0.9rem;">
+              <option value="">All Roles</option>
+              <option value="employee" {% if request.args.get('role')=='employee' %}selected{% endif %}>Employee
+              </option>
+              <option value="supervisor" {% if request.args.get('role')=='supervisor' %}selected{% endif %}>Supervisor
+              </option>
+              <option value="hr" {% if request.args.get('role')=='hr' %}selected{% endif %}>HR</option>
+            </select>
+            <button type="submit" class="btn-premium btn-primary"
+              style="width: 100%; height: 45px; font-size: 0.9rem;">Apply Filter</button>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    function toggleFilterPopup() {
+      const popup = document.getElementById('filterPopup');
+      popup.style.display = popup.style.display === 'none' ? 'block' : 'none';
+    }
+
+    // Close popup when clicking outside
+    document.addEventListener('click', function (event) {
+      const popup = document.getElementById('filterPopup');
+      const btn = document.getElementById('filterBtn');
+      if (popup.style.display === 'block' && !popup.contains(event.target) && !btn.contains(event.target)) {
+        popup.style.display = 'none';
+      }
+    });
+  </script>
+  {% if all_employees %}
+  <table>
+    <thead>
+      <tr>
+        <th>Employee ID</th>
+        <th>Name</th>
+        <th>Role</th>
+        <th>Supervisor</th>
+        <th>Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for employee in all_employees %}
+      <tr>
+        <td>{{ employee.employee_id }}</td>
+        <td>{{ employee.name }}</td>
+        <td>{{ employee.role | capitalize }}</td>
+        <td>{{ employee.supervisor.name if employee.supervisor else '-' }}</td>
+        <td class="actions">
+          <a href="{{ url_for('edit_user', user_id=employee.id) }}">
+            <button class="btn-premium btn-dark small" style="padding: 0.4rem 0.8rem; font-size: 0.8rem;">Edit</button>
+          </a>
+          {% if employee.id != current_user.id %}
+          <form method="POST" action="{{ url_for('remove_user', user_id=employee.id) }}"
+            onsubmit="return confirm('Are you sure you want to remove this user?');" style="display:inline;">
+            <button type="submit" class="btn-premium small"
+              style="padding: 0.4rem 0.8rem; font-size: 0.8rem; background-color: #e76f51; color: white;">Remove</button>
+          </form>
+          {% else %}
+          <span style="font-size: 0.8rem; color: #888; font-style: italic;">(Current User)</span>
+          {% endif %}
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+  <p style="text-align: center; color: #888; padding: 2rem;">No employees found matching your criteria.</p>
+  {% endif %}
+</div>
+{% endblock %}
