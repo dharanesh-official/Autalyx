@@ -8,3 +8,4 @@ num2words==1.3.0
 Werkzeug==3.0.1
 SQLAlchemy==2.0.25
 email_validator==2.1.0
+python-dotenv==1.0.1
